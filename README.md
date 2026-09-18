@@ -48,7 +48,7 @@ ComplyCheck is built to be transparent and trustworthy — the kind of tool GRC 
 
 \`\`\`bash
 # Clone the repo
-git clone https://github.com/oluchiamadi/complycheck.git
+git clone https://github.com/oly-baby/complycheck.git
 cd complycheck
 
 # Install dependencies
