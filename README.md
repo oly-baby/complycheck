@@ -25,11 +25,11 @@ Answer a structured set of questions per framework, and ComplyCheck generates a 
 
 ---
 
-## Why open source?
+## About this repository
 
-ComplyCheck is built to be transparent and trustworthy — the kind of tool GRC and security teams can actually inspect before relying on it. Open-sourcing the code lets anyone review the assessment logic, verify there's nothing shady going on with data handling, and contribute improvements as frameworks evolve.
+This code is published publicly for transparency and portfolio purposes — so anyone (recruiters, collaborators, fellow GRC/security practitioners) can review the architecture and assessment logic behind ComplyCheck.
 
-👉 **The easiest way to use ComplyCheck is the hosted version at [complycheck.com.ng](https://www.complycheck.com.ng/)** — no setup required. This repo is here for transparency, learning, and contributions.
+👉 **To use ComplyCheck, visit the hosted app at [complycheck.com.ng](https://www.complycheck.com.ng/)** — this is the only supported way to use the tool. This repository is not intended for self-hosting or deployment.
 
 ---
 
@@ -44,44 +44,13 @@ ComplyCheck is built to be transparent and trustworthy — the kind of tool GRC 
 
 ---
 
-## Getting started (for contributors)
-
-\`\`\`bash
-# Clone the repo
-git clone https://github.com/oly-baby/complycheck.git
-cd complycheck
-
-# Install dependencies
-npm install
-
-# Run the dev server
-npm run dev
-\`\`\`
-
-Open [http://localhost:3000](http://localhost:3000) to see it running locally.
-
-> **Note:** Self-hosting for production use isn't officially documented or supported yet. This setup is intended for local development and contribution purposes.
-
----
-
-## Contributing
-
-Contributions are welcome! Whether it's fixing a bug, improving a framework's control mapping, or suggesting a new feature:
-
-1. Fork the repo
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes
-4. Open a pull request describing what you changed and why
-
-Found an issue or have a feature idea? Open a [GitHub Issue](https://github.com/oly-baby/complycheck/issues).
-
----
-
 ## License
 
-ComplyCheck is licensed under the **GNU Affero General Public License v3.0 (AGPLv3)**.
+This project is licensed under the PolyForm Noncommercial License 1.0.0.
 
-This means you're free to use, study, and modify the code — but if you deploy a modified version as a public service, you're required to make your changes available under the same license. See [LICENSE](./LICENSE) for full terms.
+You're welcome to view, study, and reference this code for noncommercial purposes. Commercial use, deployment, or running your own instance of this software is not permitted under this license. See [LICENSE](./LICENSE) for full terms.
+
+Interested in using ComplyCheck commercially or partnering on it? Reach out — commercial licensing is available.
 
 ---
 
