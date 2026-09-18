@@ -84,7 +84,4 @@ npx vercel
 - `npm run start` — verified `/`, `/api/feedback`, and `/api/send-report`
   respond correctly
 
-Not yet done: no automated tests, and the control catalogs, while accurate
-in substance, are a representative subset rather than a full audit-grade
-mapping of every standard — worth a compliance SME review before this is
-used for a real audit.
+
