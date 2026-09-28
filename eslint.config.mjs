@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agent Manager worktrees are separate copies of the project, not sources.
+    ".kilo/**",
   ]),
 ]);
 

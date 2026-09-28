@@ -4,7 +4,7 @@ type PlausibleEvent =
   | "assessment_completed"
   | "pdf_downloaded"
   | "email_submitted"
-  | "feedback_submitted";
+  | "pci_merchant_level_selected";
 
 declare global {
   interface Window {

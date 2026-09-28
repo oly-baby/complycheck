@@ -7,6 +7,8 @@ interface SendReportPayload {
   readinessPct: number;
   gapCount: number;
   riskLevel: string;
+  merchantLevelName?: string;
+  assessmentMethod?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -39,6 +41,7 @@ export async function POST(req: NextRequest) {
             <p>Hi,</p>
             <p>Here's a summary of your ${payload.frameworkName} assessment for ${payload.companyName || "your organization"}:</p>
             <ul>
+              ${payload.merchantLevelName ? `<li>Merchant level: ${payload.merchantLevelName}${payload.assessmentMethod ? ` (${payload.assessmentMethod})` : ""}</li>` : ""}
               <li>Readiness: ${payload.readinessPct}%</li>
               <li>Open gaps: ${payload.gapCount}</li>
               <li>Risk level: ${payload.riskLevel}</li>

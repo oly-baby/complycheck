@@ -51,6 +51,7 @@ export function getDemoState(): AssessmentState {
       updatedAt: now,
     },
     activeFramework: "iso27001",
+    pciMerchantLevel: null,
     controlAssessments: buildAssessments(),
     policyAssessments: {},
   };

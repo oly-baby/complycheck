@@ -10,6 +10,7 @@ export const emptyState: AssessmentState = {
     updatedAt: "",
   },
   activeFramework: null,
+  pciMerchantLevel: null,
   controlAssessments: {},
   policyAssessments: {},
 };

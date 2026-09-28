@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { X, FileDown, FileSpreadsheet, FileJson, Mail, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
-import { Framework, FrameworkScore, STATUS_LABEL } from "@/lib/types";
+import { AssessmentState, Framework, FrameworkScore, STATUS_LABEL } from "@/lib/types";
+import { getMerchantLevelInfo, merchantLevelItems } from "@/lib/merchantLevels";
 
 const STATUS_COLOR: Record<string, string> = {
   Covered: "var(--color-emerald)",
@@ -24,7 +25,7 @@ export function ReportSummaryModal({
 }: {
   framework: Framework;
   score: FrameworkScore;
-  state?: { controlAssessments: Record<string, { status: string; notes?: string }> };
+  state?: AssessmentState;
   onClose: () => void;
   onDownloadPdf: () => void;
   onDownloadCsv: () => void;
@@ -32,6 +33,16 @@ export function ReportSummaryModal({
   onEmailReport: () => void;
 }) {
   const [showRemediation, setShowRemediation] = useState(true);
+
+  const merchantLevel = getMerchantLevelInfo(framework, state?.pciMerchantLevel);
+
+  // PCI-DSS reports gaps from the selected level's questionnaire; every other
+  // framework reports gaps from its control checklist.
+  const pciGapItems = useMemo(() => {
+    if (!merchantLevel) return [];
+    return merchantLevelItems(framework, merchantLevel.level, state?.controlAssessments ?? {})
+      .filter((i) => i.status === "gap" || i.status === "partial");
+  }, [framework, state, merchantLevel]);
 
   const gapItems = useMemo(() => {
     return framework.controls
@@ -45,6 +56,8 @@ export function ReportSummaryModal({
       });
   }, [framework.controls, state]);
 
+  const openCount = merchantLevel ? pciGapItems.length : gapItems.length;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div
@@ -55,6 +68,11 @@ export function ReportSummaryModal({
           <div>
             <h2 className="font-display text-xl font-medium">Export Gap Assessment Report</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">{framework.name} · {framework.version}</p>
+            {merchantLevel && (
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                {merchantLevel.name} · {merchantLevel.transactionVolumeRange} · {merchantLevel.assessmentMethod}
+              </p>
+            )}
           </div>
           <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text)]">
             <X size={18} />
@@ -97,7 +115,7 @@ export function ReportSummaryModal({
         </div>
 
         {/* Remediation summary */}
-        {gapItems.length > 0 && (
+        {openCount > 0 && (
           <div className="mb-5 rounded-lg border" style={{ borderColor: "var(--border)" }}>
             <button
               onClick={() => setShowRemediation((v) => !v)}
@@ -105,13 +123,36 @@ export function ReportSummaryModal({
             >
               <span className="flex items-center gap-2">
                 <Sparkles size={14} style={{ color: "var(--color-amber)" }} />
-                Top remediation strategies ({gapItems.length} gaps)
+                {merchantLevel
+                  ? `Open questionnaire answers (${openCount})`
+                  : `Top remediation strategies (${openCount} gaps)`}
               </span>
               {showRemediation ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </button>
             {showRemediation && (
               <div className="space-y-2 border-t px-4 py-3 text-sm" style={{ borderColor: "var(--border)" }}>
-                {gapItems.slice(0, 6).map((c) => {
+                {merchantLevel
+                  ? pciGapItems.slice(0, 6).map((item) => (
+                      <div key={item.id} className="rounded-md border p-2.5" style={{ borderColor: "var(--border)" }}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-xs text-[var(--text-muted)]">{item.ref}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-[var(--text-muted)]">PCI Req {item.pciRequirement}</span>
+                            <span
+                              className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+                              style={{
+                                background: `color-mix(in srgb, ${STATUS_COLOR[STATUS_LABEL[item.status]]} 15%, transparent)`,
+                                color: STATUS_COLOR[STATUS_LABEL[item.status]],
+                              }}
+                            >
+                              {STATUS_LABEL[item.status]}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="mt-1 leading-snug">{item.text}</p>
+                      </div>
+                    ))
+                  : gapItems.slice(0, 6).map((c) => {
                   const status = state?.controlAssessments[c.id]?.status ?? "unmarked";
                   return (
                     <div key={c.id} className="rounded-md border p-2.5" style={{ borderColor: "var(--border)" }}>
@@ -147,9 +188,9 @@ export function ReportSummaryModal({
                     </div>
                   );
                 })}
-                {gapItems.length > 6 && (
+                {openCount > 6 && (
                   <p className="text-center text-xs text-[var(--text-muted)]">
-                    +{gapItems.length - 6} more — see full PDF report for complete roadmap.
+                    +{openCount - 6} more — see full PDF report for complete roadmap.
                   </p>
                 )}
               </div>

@@ -10,12 +10,12 @@ import { AssessmentChecklist } from "@/components/AssessmentChecklist";
 import { PolicyChecklist } from "@/components/PolicyChecklist";
 import { ReportSummaryModal } from "@/components/ReportSummaryModal";
 import { EmailLeadModal } from "@/components/EmailLeadModal";
-import { FeedbackModal } from "@/components/FeedbackModal";
 import { CollaborationBanner } from "@/components/CollaborationBanner";
 import { frameworks, getFramework } from "@/data/frameworks";
 import { getDemoState } from "@/data/demoData";
-import { AssessmentState, ControlStatus, FrameworkId } from "@/lib/types";
-import { scoreAllFrameworks, scoreFramework } from "@/lib/scoring";
+import { AssessmentState, ControlStatus, FrameworkId, MerchantLevel } from "@/lib/types";
+import { scoreAllFrameworks, scoreFramework, scoreMerchantLevel } from "@/lib/scoring";
+import { getMerchantLevelInfo } from "@/lib/merchantLevels";
 import { loadState, saveState, emptyState, clearState } from "@/lib/storage";
 import { exportFrameworkCsv, exportFrameworkJson } from "@/lib/exportUtils";
 import { generateGapAssessmentPdf } from "@/lib/pdfGenerator";
@@ -30,7 +30,6 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   useEffect(() => {
     const loaded = loadState();
@@ -48,13 +47,18 @@ export default function Home() {
     if (hydrated) saveState(state);
   }, [state, hydrated]);
 
-  const scores = useMemo(
-    () =>
-      Object.fromEntries(
-        scoreAllFrameworks(frameworks, state.controlAssessments).map((s) => [s.frameworkId, s])
-      ) as Record<FrameworkId, ReturnType<typeof scoreFramework>>,
-    [state.controlAssessments]
-  );
+  const scores = useMemo(() => {
+    const base = Object.fromEntries(
+      scoreAllFrameworks(frameworks, state.controlAssessments).map((s) => [s.frameworkId, s])
+    ) as Record<FrameworkId, ReturnType<typeof scoreFramework>>;
+    // PCI-DSS is scored from the selected merchant level's questionnaire.
+    base.pciDss = scoreMerchantLevel(
+      getFramework("pciDss"),
+      state.pciMerchantLevel,
+      state.controlAssessments
+    );
+    return base;
+  }, [state.controlAssessments, state.pciMerchantLevel]);
 
   const activeFramework =
     state.activeFramework && state.activeFramework !== "policies"
@@ -92,6 +96,11 @@ export default function Home() {
     setView("policies");
   }
 
+  function handleMerchantLevelChange(level: MerchantLevel | null) {
+    setState((s) => ({ ...s, pciMerchantLevel: level }));
+    trackEvent("pci_merchant_level_selected", { level: level ?? "none" });
+  }
+
   function handleStatusChange(controlId: string, status: ControlStatus) {
     setState((s) => ({
       ...s,
@@ -101,12 +110,15 @@ export default function Home() {
       },
     }));
 
-    if (activeFramework && activeScore) {
+    if (activeFramework && activeScore && activeScore.total > 0) {
+      // PCI-DSS questions and control items both complete on the last unmarked answer.
       const willBeComplete =
-        activeScore.unmarked <= 1 &&
-        activeFramework.controls.every(
-          (c) => c.id === controlId || (state.controlAssessments[c.id]?.status ?? "unmarked") !== "unmarked"
-        );
+        activeFramework.id === "pciDss"
+          ? activeScore.unmarked <= 1
+          : activeScore.unmarked <= 1 &&
+            activeFramework.controls.every(
+              (c) => c.id === controlId || (state.controlAssessments[c.id]?.status ?? "unmarked") !== "unmarked"
+            );
       if (willBeComplete) {
         confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
         trackEvent("assessment_completed", { framework: activeFramework.id });
@@ -158,6 +170,7 @@ export default function Home() {
 
   async function handleEmailSubmit(email: string): Promise<boolean> {
     if (!activeFramework || !activeScore) return false;
+    const merchantLevel = getMerchantLevelInfo(activeFramework, state.pciMerchantLevel);
     try {
       const res = await fetch("/api/send-report", {
         method: "POST",
@@ -166,6 +179,8 @@ export default function Home() {
           email,
           companyName: state.meta.companyName,
           frameworkName: activeFramework.name,
+          merchantLevelName: merchantLevel?.name,
+          assessmentMethod: merchantLevel?.assessmentMethod,
           readinessPct: activeScore.readinessPct,
           gapCount: activeScore.gap,
           riskLevel: activeScore.riskLevel,
@@ -176,19 +191,6 @@ export default function Home() {
     } catch {
       return false;
     }
-  }
-
-  async function handleFeedbackSubmit(rating: number, feedback: string) {
-    try {
-      await fetch("/api/feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating, feedback, frameworkName: activeFramework?.name }),
-      });
-    } catch {
-      // best-effort — feedback UI already confirms submission
-    }
-    trackEvent("feedback_submitted");
   }
 
   if (!hydrated) return null;
@@ -217,6 +219,8 @@ export default function Home() {
           framework={activeFramework}
           assessments={state.controlAssessments}
           score={activeScore}
+          merchantLevel={state.pciMerchantLevel}
+          onMerchantLevelChange={handleMerchantLevelChange}
           onBack={() => setView("frameworks")}
           onStatusChange={handleStatusChange}
           onNotesChange={handleNotesChange}
@@ -230,14 +234,6 @@ export default function Home() {
           onStatusChange={handlePolicyStatusChange}
           onBack={() => setView("frameworks")}
         />
-      )}
-
-      {view !== "landing" && (
-        <div className="mx-auto max-w-7xl px-6 pb-4">
-          <button onClick={() => setShowFeedbackModal(true)} className="text-xs text-[var(--text-muted)] underline">
-            Rate this assessment
-          </button>
-        </div>
       )}
 
       <CollaborationBanner />
@@ -263,10 +259,6 @@ export default function Home() {
       )}
 
       {showEmailModal && <EmailLeadModal onClose={() => setShowEmailModal(false)} onSubmit={handleEmailSubmit} />}
-
-      {showFeedbackModal && (
-        <FeedbackModal onClose={() => setShowFeedbackModal(false)} onSubmit={handleFeedbackSubmit} />
-      )}
     </div>
   );
 }

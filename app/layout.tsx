@@ -8,7 +8,6 @@ import "@fontsource/inter/600.css";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { PlausibleTracker } from "@/components/PlausibleTracker";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -32,7 +31,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className="antialiased">
-        <PlausibleTracker />
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

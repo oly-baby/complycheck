@@ -25,20 +25,9 @@ export interface Control {
   remediationStrategy?: string; // Suggested remediation path for gap/partial
   priority?: "low" | "medium" | "high" | "critical";
   socType?: "I" | "II" | "both"; // For SOC 2 controls
-  saqType?: SAQType; // For PCI DSS controls
 }
 
-export type SAQType =
-  | "A"
-  | "A-EP"
-  | "B"
-  | "B-IP"
-  | "C-VT"
-  | "C"
-  | "P2PE"
-  | "D-Merchant"
-  | "D-ServiceProvider"
-  | "SPoC";
+export type MerchantLevel = "level1" | "level2" | "level3" | "level4";
 
 export interface Domain {
   id: string;
@@ -55,21 +44,21 @@ export interface Framework {
   color: string; // accent hex for this framework's badge
   domains: Domain[];
   controls: Control[];
-  saqTypes?: SAQTypeInfo[]; // Only for PCI-DSS
+  merchantLevels?: MerchantLevelTypeInfo[]; // Only for PCI-DSS
   soc2Types?: SOC2TypeInfo[]; // Only for SOC 2
 }
 
-export interface SAQTypeInfo {
-  type: SAQType;
+export interface MerchantLevelTypeInfo {
+  level: MerchantLevel;
   name: string;
   description: string;
-  targetEnvironment: string;
-  approxQuestions: string;
-  questions: SAQQuestion[];
+  transactionVolumeRange: string;
+  assessmentMethod: string;
+  questions: MerchantLevelQuestion[];
 }
 
-export interface SAQQuestion {
-  ref: string; // e.g., "A.1", "A-EP.2", "B.3"
+export interface MerchantLevelQuestion {
+  ref: string; // e.g., "L1.1", "L2.3", "L3.2"
   text: string;
   pciRequirement?: string; // Underlying PCI-DSS requirement
 }
@@ -129,6 +118,7 @@ export interface AssessmentMeta {
 export interface AssessmentState {
   meta: AssessmentMeta;
   activeFramework: FrameworkId | "policies" | null;
+  pciMerchantLevel: MerchantLevel | null;
   controlAssessments: Record<string, ControlAssessment>; // key: controlId
   policyAssessments: Record<string, PolicyAssessment>; // key: policyId
 }

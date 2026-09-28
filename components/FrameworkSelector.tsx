@@ -65,7 +65,7 @@ export function FrameworkSelector({
                   {f.shortName}
                 </span>
                 <span className="font-mono text-xs text-[var(--text-muted)]">
-                  {f.controls.length} controls
+                  {f.merchantLevels ? `${f.merchantLevels.length} levels` : `${f.controls.length} controls`}
                 </span>
               </div>
               <h3 className="font-display mb-1.5 text-lg font-medium leading-snug">

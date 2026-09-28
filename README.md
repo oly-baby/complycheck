@@ -39,7 +39,6 @@ This code is published publicly for transparency and portfolio purposes — so a
 - **Styling:** Tailwind CSS
 - **Icons:** Lucide
 - **PDF export:** jsPDF / jspdf-autotable
-- **Analytics:** Plausible (privacy-respecting, no cookies/tracking)
 - **Hosting:** Vercel
 
 ---
